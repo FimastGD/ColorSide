@@ -5,6 +5,9 @@ import inquirer, { Question, Answers } from 'inquirer';
 import { password, input as text, select, checkbox, confirm } from '@inquirer/prompts';
 import toggle from 'inquirer-toggle';
 
+interface SelectColor<Type> {
+	keys?: Type[], color?: string
+}
 type CustomQuestion = Partial<Question> & {
 	messageColor?: string,
 	inputColor?: string,
@@ -12,7 +15,8 @@ type CustomQuestion = Partial<Question> & {
 	prefixColor?: string, // only with custom prefix 
 	validate?: (input: string) => boolean | string,
 	instructions?: boolean | string,
-	finishPrefix?: boolean
+	finishPrefix?: boolean,
+	selectColors?: SelectColor<string>[]
 };
 type ToggleTheme = {
 	active?: string;
@@ -58,8 +62,6 @@ type Choice<Value> = {
 	disabled?: boolean | string;
 };
 type bool = boolean;
-
-
 // ANSI escape codes
 export const ANSI = {
 	reset: '\x1b[0m',
@@ -252,7 +254,6 @@ class InputModule {
 			process.stdout.write(ANSI.reset + "\n");
 			process.exit(0);
 		});
-
 		const message: string = String(props.message);
 		const messageColor: string = props.messageColor ?? "";
 		const inputColor: string = props.inputColor ?? "";
@@ -280,7 +281,6 @@ class InputModule {
 		cs.console.unfreeze();
 		return result;
 	}
-
 	async readnumber(props: CustomQuestion) {
 		this.checkActivation();
 		const cs = new ColorSide("en");
@@ -296,20 +296,17 @@ class InputModule {
 		const prefix: string | null | undefined = (props.prefix === undefined) ? undefined : (props.prefix === null) ? null : props.prefix;
 		const prefixColor: string = props.prefixColor ?? "";
 		const finishPrefix: bool = props.finishPrefix ?? true;
-
 		const options = {
 			message: `${messageColor}${message}${ANSI.reset}${inputColor}`,
 			default: props.default,
 			validate: (val: string) => {
 				const num = Number(val);
 				if (isNaN(num)) return (this.lang.toLowerCase() == "ru") ? "Разрешено вводить только число" : "Please provide a valid numeric value";
-
 				// Проверяем, есть ли пользовательская валидация
 				if (props.validate) {
 					const customCheck = props.validate(val);
 					if (customCheck !== true) return customCheck;
 				}
-
 				return true;
 			},
 			filter: (val: string) => {
@@ -327,13 +324,11 @@ class InputModule {
 				}
 			}
 		};
-
 		const result = await text(options);
 		process.stdout.write(ANSI.reset);
 		cs.console.unfreeze();
 		return result;
 	}
-
 	async readconfirm(props: CustomQuestion) {
 		this.checkActivation();
 		const cs = new ColorSide("en");
@@ -343,14 +338,12 @@ class InputModule {
 			process.stdout.write(ANSI.reset + "\n");
 			process.exit(0);
 		});
-
 		const message: string = String(props.message);
 		const messageColor: string = props.messageColor ?? "";
 		const inputColor: string = props.inputColor ?? "";
 		const prefix: string | null | undefined = (props.prefix === undefined) ? undefined : (props.prefix === null) ? null : props.prefix;
 		const prefixColor: string = props.prefixColor ?? "";
 		const finishPrefix: bool = props.finishPrefix ?? true;
-
 		const options = {
 			message: `${messageColor}${message}${ANSI.reset}${inputColor}`,
 			validate: props.validate,
@@ -362,7 +355,6 @@ class InputModule {
 				},
 				style: {
 					error: (text: string) => `${ANSI.fg.bright.red}${ANSI.format.bold}\u2717${ANSI.reset}${ANSI.fg.bright.red} ${text}${ANSI.reset}`,
-					// answer: (text) => inputColor ? `${inputColor}${text}${ANSI.reset}` : `${ANSI.fg.cyan}${text}${ANSI.reset}`
 				}
 			}
 		};
@@ -372,7 +364,6 @@ class InputModule {
 		cs.console.unfreeze();
 		return result;
 	}
-
 	async readlist(props: CustomQuestion) {
 		this.checkActivation();
 		const cs = new ColorSide("en");
@@ -389,12 +380,12 @@ class InputModule {
 		const prefixColor: string = props.prefixColor ?? "";
 		let instructions: bool | string | undefined;
 		const finishPrefix: bool = props.finishPrefix ?? true;
-
+		const selectColors: SelectColor<string>[] = props.selectColors || [];
 		if (props.instructions == undefined || props.instructions == true) {
 			if (this.lang.toLowerCase() == "ru") {
 				instructions = `(Стрелки вверх/вниз для навигации)`;
 			} else {
-				instructions = `(Use arrows to navigate)`;
+				instructions = `(Use arrow keys to navigate)`;
 			}
 		} else {
 			instructions = false;
@@ -413,17 +404,26 @@ class InputModule {
 				style: {
 					error: (text: string) => `${ANSI.fg.bright.red}${ANSI.format.bold}\u2717${ANSI.reset}${ANSI.fg.bright.red} ${text}${ANSI.reset}`,
 					help: (text: string) => instructions || "",
-					disabled: (text: string) => (this.lang.toLowerCase() == "ru") ? text.replace(/disabled/g, 'отключено') : text
-					// answer: (text) => inputColor ? `${inputColor}${text}${ANSI.reset}` : `${ANSI.fg.cyan}${text}${ANSI.reset}`
+					disabled: (text: string) => (this.lang.toLowerCase() == "ru") ? text.replace(/disabled/g, 'отключено') : text,
+					highlight: (text: string) => {
+						const cleanText = text.replace("> ", "");
+						for (const colorItem of selectColors) {
+							if (colorItem.keys.includes(cleanText)) {
+								return `${colorItem.color}${text}${ANSI.reset}`;
+							}
+						}
+						return `${ANSI.fg.cyan}${text}${ANSI.reset}`;
+					}
 				}
 			}
 		};
 
 		const result = await select(options);
 		process.stdout.write(ANSI.reset);
-		return result;
 		cs.console.unfreeze();
+		return result;
 	}
+
 
 	async readcheckbox<Value = unknown>(props: {
 		message: string;
@@ -437,6 +437,7 @@ class InputModule {
 		instructions?: boolean | string;
 		hardcheck?: boolean;
 		finishPrefix?: boolean;
+		selectColors?: SelectColor<string>[];
 	}) {
 		this.checkActivation();
 		const cs = new ColorSide("en");
@@ -454,6 +455,7 @@ class InputModule {
 		const prefixColor = props.prefixColor ?? "";
 		let instructions: bool | string | undefined;
 		const finishPrefix: bool = props.finishPrefix ?? true;
+		const selectColors: SelectColor<string>[] = props.selectColors || [];
 
 		if (props.instructions == undefined || props.instructions == true) {
 			if (this.lang.toLowerCase() == "ru") {
@@ -464,7 +466,6 @@ class InputModule {
 		} else {
 			instructions = false;
 		}
-
 		const options = {
 			message: `${messageColor}${props.message}${ANSI.reset}${inputColor}`,
 			choices: props.choices,
@@ -472,21 +473,17 @@ class InputModule {
 			instructions: instructions,
 			validate: (selectedItems: readonly Choice<Value>[]) => {
 				const values = selectedItems.map(item => item.value);
-				// Базовая проверка на пустой выбор
 				if (props.hardcheck) {
 					if (values.length === 0) {
 						return (this.lang.toLowerCase() == "ru") ? 'Выберите хотя бы один вариант' : 'Select at least one option';
 					}
 				}
-				// Пользовательская валидация
 				if (props.validate) {
 					const validationResult = props.validate(values);
 					if (typeof validationResult === 'string') {
 						return validationResult;
 					}
-					if (validationResult === false) {
-						//return 'Недопустимый выбор';
-					}
+					if (validationResult === false) { }
 				}
 				return true;
 			},
@@ -498,11 +495,19 @@ class InputModule {
 				},
 				style: {
 					error: (text: string) => `${ANSI.fg.bright.red}${ANSI.format.bold}✗${ANSI.reset} ${ANSI.fg.bright.red}${text}`,
-					disabledChoice: (text: string) => (this.lang.toLowerCase() == "ru") ? `${text.replace(/\(disabled\)/g, "(отключено)")}` : `${text}`
+					disabledChoice: (text: string) => (this.lang.toLowerCase() == "ru") ? `${text.replace(/\(disabled\)/g, "(отключено)")}` : `${text}`,
+					highlight: (text: string) => {
+						const cleanText = text.replace(">( ) ", "");
+						for (const colorItem of selectColors) {
+							if (colorItem.keys.includes(cleanText)) {
+								return `${colorItem.color}${text}${ANSI.reset}`;
+							}
+						}
+						return `${ANSI.fg.cyan}${text}${ANSI.reset}`;
+					}
 				}
 			}
 		};
-
 		const result = await checkbox<Value>(options);
 		process.stdout.write(ANSI.reset);
 		cs.console.unfreeze();
@@ -517,7 +522,6 @@ class InputModule {
 			process.stdout.write(ANSI.reset + "\n");
 			process.exit(0);
 		});
-
 		const message: string = String(props.message);
 		const messageColor: string = props.messageColor ?? "";
 		const inputColor: string = props.inputColor ?? "";
@@ -565,10 +569,6 @@ class InputModule {
 			validate: props.validate,
 			default: props.default,
 			theme: {
-				/*prefix: {
-					idle: (prefix === undefined) ? `${ANSI.fg.blue}?${ANSI.reset}` : (prefix === null) ? '' : `${prefixColor}${prefix}${ANSI.reset}`,
-					done: finishPrefix ? `${ANSI.fg.bright.green}${ANSI.format.bold}✓${ANSI.reset}` : ""
-				},*/
 				active: props.active ?? "Yes",
 				inactive: props.inactive ?? "No",
 				prefix: prefix ? `${prefixColor}${prefix}` : `${ANSI.fg.blue}?${ANSI.reset}`,
@@ -618,7 +618,7 @@ export class Random {
 	 * @param min - minimum value in range
 	 * @param max - maximum value in range
 	 * @returns number - random int in range
-	*/ 
+	*/
 	public static Int(min: number, max: number): number {
 		min = Math.ceil(min);
 		max = Math.floor(max);
@@ -628,7 +628,7 @@ export class Random {
 	 * @param min - minimum value in range
 	 * @param max - maximum value in range
 	 * @returns number - random float in range
-	*/ 
+	*/
 	public static Float(min: number, max: number): number {
 		return Math.random() * (max - min) + min;
 	}
@@ -636,7 +636,7 @@ export class Random {
 	 * @param charSets - symbol ranges (a-z, A-Z, 0-9, CuSt0M_Symbols)
 	 * @param length - string length
 	 * @returns string - random string
-	*/ 
+	*/
 	public static String(charSets: string[], length: number): string {
 		let charPool = '';
 		for (const set of charSets) {
@@ -662,5 +662,5 @@ export class Random {
 			result += charPool[randomIndex];
 		}
 		return result;
-  }
-}
+	}
+		}
