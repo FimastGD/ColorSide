@@ -332,9 +332,9 @@ Demo 10: <br>
 # Random module 
 
 ```ts
-import ColorSide, { Random, ANSI } from 'colorside
+import ColorSide, { Random, ANSI } from 'colorside';
 
 Random.Int(1, 7); // Random int in range
-Random.Float(1, 7) // Random float in range
+Random.Float(1, 7); // Random float in range
 Random.String(['A-Z', 'a-z', '0-9', /* custom symbols */ '&_₽*$+=%'], 8 /* length */); // Random string value
 ``` 
