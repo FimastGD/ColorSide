@@ -202,6 +202,14 @@ async function main(): Promise<void> {
         // instructions: (boolean) false - hide input instructions 
     });
     cs.console.log(`OS selected: ${cs.fg.bright.green(name)}`);
+/* CUSTOM HIGHLIGHTING
+selectColors: [
+  {
+    keys: ["Admin"],
+    color: ANSI.fg.bright.red
+  }
+] 
+*/
     
 }
 
@@ -237,6 +245,7 @@ async function main(): Promise<void> {
         // instructions: (boolean) false - hide input instructions 
     });
     cs.console.log(`OS selected: ${cs.fg.bright.green(name)}`);
+/* CUSTOM HIGHLIGHTING supports already like in readlist */
 }
 
 main();
