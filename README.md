@@ -18,6 +18,11 @@ cs.use(/* class */); // Using package classes
 > [!NOTE]
 > Если вы из России, по возможности купите мне поесть :)<br>Карта: 5599002097457313
 
+# Build
+```bash
+npm run compile
+```
+
 # First call
 ```ts
 import ColorSide from 'colorside';
