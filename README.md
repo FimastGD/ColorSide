@@ -15,8 +15,8 @@ import ColorSide from 'colorside';
 const cs: any = new ColorSide("en"); // language if instructions: 'ru' OR 'en'
 cs.use(/* class */); // Using package classes
 ```
-> [!NOTE] Если вы из России, по возможности купите мне поесть :)<br>
-> Карта: 5599002097457313
+> [!NOTE]
+> Если вы из России, по возможности купите мне поесть :)<br>Карта: 5599002097457313
 
 # First call
 ```ts
