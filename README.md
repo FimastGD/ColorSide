@@ -49,7 +49,9 @@ Demo 1: <br>
 - cs.bg.color() - background color
 - cs.bg.bright.color() - background bright color
 - cs.format.style() - bold / underlined text
+
 <br>
+
 ```ts
 import ColorSide from 'colorside';
 
