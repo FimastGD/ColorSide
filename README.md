@@ -1,9 +1,6 @@
 # ColorSide
 Colorful terminal control, amazing inputs and Random features!
 
-> **Fun fact**<br>
-> There are 666 lines in the code 😈
-
 # Install
 ```bash
 npm install colorside@latest
@@ -93,6 +90,18 @@ cs.console.warn("Only Ctrl-C will kill app");
 
 // Later, you can unfreeze the process automatically
 // cs.console.unfreeze();
+```
+## Sync sleep
+Like setTimeout, but sync
+```ts
+import ColorSide from 'colorside';
+
+const cs: any = new ColorSide("ru");
+cs.use(cs.console);
+
+cs.console.log("Downloading...");
+cs.console.sleepSync(1000); // 1s
+cs.console.log("Success!");
 ```
 
 # Input (cs.input)
@@ -199,18 +208,18 @@ async function main(): Promise<void> {
         // finishPrefix: /*(boolean)*/ true, - show final prefix when input readed
         // default: /*(string)*/ "value", - default name
         // validate: (val) => (condition) || else - input validation
-        // instructions: (boolean) false - hide input instructions 
+        // instructions: (boolean) false, - hide input instructions 
+        /* CUSTOM HIGHLIGHTING
+        selectColors: [
+            {
+                keys: ["Admin"],
+                color: ANSI.fg.bright.red
+            }
+        ],
+        answerColor: "auto" / ANSI.color (string) // What will be the final color of the answer: auto - uses indexes from selectColor
+        */
     });
     cs.console.log(`OS selected: ${cs.fg.bright.green(name)}`);
-/* CUSTOM HIGHLIGHTING
-selectColors: [
-  {
-    keys: ["Admin"],
-    color: ANSI.fg.bright.red
-  }
-] 
-*/
-    
 }
 
 main();
@@ -330,6 +339,13 @@ async function main(): Promise<void> {
         // STRING ONLY prefix: /*(string)*/ '>', - custom prefix. null = prefix disabled
         // default: /*(string)*/ - default name
         // validate: (val) => (condition) || else - input validation
+        /* CUSTOM HIGHLIGHTING
+        selectColors: {
+            active: ANSI.color,
+            inactive: ANSI.color 
+        }
+        answerColor: "auto" / ANSI.color (string) // What will be the final color of the answer: auto - uses indexes from selectColor
+        */
         
         /** @returns true / false */
     });
