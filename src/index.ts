@@ -4,9 +4,15 @@ import util from 'util';
 import inquirer, { Question, Answers } from 'inquirer';
 import { password, input as text, select, checkbox, confirm } from '@inquirer/prompts';
 import toggle from 'inquirer-toggle';
+import { execSync } from 'child_process';
 
 interface SelectColor<Type> {
-	keys?: Type[], color?: string
+	keys?: Type[],
+	color?: string;
+}
+interface SelectColorToggle {
+	active?: string,
+	inactive?: string;
 }
 type CustomQuestion = Partial<Question> & {
 	messageColor?: string,
@@ -16,7 +22,8 @@ type CustomQuestion = Partial<Question> & {
 	validate?: (input: string) => boolean | string,
 	instructions?: boolean | string,
 	finishPrefix?: boolean,
-	selectColors?: SelectColor<string>[]
+	selectColors?: SelectColor<string>[],
+	answerColor?: string
 };
 type ToggleTheme = {
 	active?: string;
@@ -34,11 +41,13 @@ type ToggleTheme = {
 type ToggleQuestion = Partial<Question> & {
 	messageColor?: string;
 	inputColor?: string;
+	selectColors?: SelectColorToggle;
 	prefix?: string | null;
 	prefixColor?: string;
 	validate?: (input: string) => boolean | string;
 	instructions?: boolean | string;
 	finishPrefix?: boolean;
+	answerColor?: string;
 	// Добавляем поддержку toggle-специфичных свойств
 	active?: string;
 	inactive?: string;
@@ -130,6 +139,10 @@ class ConsoleModule {
 
 	private checkActivation() {
 		if (!this.activated) throw new Error('Console module not activated');
+	}
+
+	public sleepSync(ms: number) {
+		Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 	}
 
 	log(...args: any[]) {
@@ -381,6 +394,7 @@ class InputModule {
 		let instructions: bool | string | undefined;
 		const finishPrefix: bool = props.finishPrefix ?? true;
 		const selectColors: SelectColor<string>[] = props.selectColors || [];
+		const answerColor: string = props.answerColor ?? "";
 		if (props.instructions == undefined || props.instructions == true) {
 			if (this.lang.toLowerCase() == "ru") {
 				instructions = `(Стрелки вверх/вниз для навигации)`;
@@ -404,7 +418,7 @@ class InputModule {
 				style: {
 					error: (text: string) => `${ANSI.fg.bright.red}${ANSI.format.bold}\u2717${ANSI.reset}${ANSI.fg.bright.red} ${text}${ANSI.reset}`,
 					help: (text: string) => instructions || "",
-					disabled: (text: string) => (this.lang.toLowerCase() == "ru") ? text.replace(/disabled/g, 'отключено') : text,
+					disabled: (text: string) => text,
 					highlight: (text: string) => {
 						const cleanText = text.replace("> ", "");
 						for (const colorItem of selectColors) {
@@ -413,6 +427,21 @@ class InputModule {
 							}
 						}
 						return `${ANSI.fg.cyan}${text}${ANSI.reset}`;
+					},
+					answer: (text: string) => {
+						if (answerColor == "auto") {
+							const cleanText = text;
+							for (const colorItem of selectColors) {
+								if (colorItem.keys.includes(cleanText)) {
+									return `${colorItem.color}${text}${ANSI.reset}`;
+								}
+							}
+							return `${ANSI.fg.cyan}${text}${ANSI.reset}`;
+						} else if (answerColor != "") {
+							return answerColor + text + ANSI.reset;
+						} else {
+							return ANSI.fg.cyan + text + ANSI.reset;
+						}
 					}
 				}
 			}
@@ -423,7 +452,6 @@ class InputModule {
 		cs.console.unfreeze();
 		return result;
 	}
-
 
 	async readcheckbox<Value = unknown>(props: {
 		message: string;
@@ -495,7 +523,7 @@ class InputModule {
 				},
 				style: {
 					error: (text: string) => `${ANSI.fg.bright.red}${ANSI.format.bold}✗${ANSI.reset} ${ANSI.fg.bright.red}${text}`,
-					disabledChoice: (text: string) => (this.lang.toLowerCase() == "ru") ? `${text.replace(/\(disabled\)/g, "(отключено)")}` : `${text}`,
+					disabledChoice: (text: string) => `${text}`,
 					highlight: (text: string) => {
 						const cleanText = text.replace(">( ) ", "");
 						for (const colorItem of selectColors) {
@@ -513,6 +541,7 @@ class InputModule {
 		cs.console.unfreeze();
 		return result;
 	}
+
 	async readpassword(props: CustomQuestion) {
 		this.checkActivation();
 		const cs = new ColorSide("en");
@@ -549,6 +578,7 @@ class InputModule {
 		cs.console.unfreeze();
 		return result;
 	}
+
 	async readtoggle(props: ToggleQuestion) {
 		this.checkActivation();
 		const cs = new ColorSide("en");
@@ -564,6 +594,9 @@ class InputModule {
 		const prefix: string | null | undefined = (props.prefix === undefined) ? undefined : (props.prefix === null) ? null : props.prefix;
 		const prefixColor: string = props.prefixColor ?? "";
 		const finishPrefix: bool = props.finishPrefix ?? true;
+		const selectColorActive = props.selectColors.active ?? "";
+		const selectColorInactive = props.selectColors.inactive ?? "";
+		const answerColor = props.answerColor ?? "";
 		const options = {
 			message: `${messageColor}${message}${ANSI.reset}${inputColor}`,
 			validate: props.validate,
@@ -574,7 +607,38 @@ class InputModule {
 				prefix: prefix ? `${prefixColor}${prefix}` : `${ANSI.fg.blue}?${ANSI.reset}`,
 				style: {
 					error: (text: string) => `${ANSI.fg.bright.red}${ANSI.format.bold}\u2717${ANSI.reset}${ANSI.fg.bright.red} ${text}${ANSI.reset}`,
-					answer: (text) => inputColor ? `${inputColor}${text}${ANSI.reset}` : `${ANSI.fg.cyan}${text}${ANSI.reset}`
+					answer: (text) => {
+						if (answerColor == "auto") {
+							if (text == props.active) {
+								if (selectColorActive != "")
+									return `${selectColorActive}${text}${ANSI.reset}`;
+								else
+									return `${ANSI.fg.cyan}${text}${ANSI.reset}`;
+							} else {
+								if (selectColorInactive != "")
+									return `${selectColorInactive}${text}${ANSI.reset}`;
+								else
+									return `${ANSI.fg.cyan}${text}${ANSI.reset}`;
+							}
+						} else if (answerColor != "") {
+							return answerColor + text + ANSI.reset
+						} else {
+							return ANSI.fg.cyan + text + ANSI.reset
+						}
+					},
+					highlight: (text) => {
+						if (text == props.active) {
+							if (selectColorActive != "")
+								return `${selectColorActive}${text}${ANSI.reset}`;
+							else
+								return `${ANSI.fg.cyan}${text}${ANSI.reset}`;
+						} else {
+							if (selectColorInactive != "")
+								return `${selectColorInactive}${text}${ANSI.reset}`;
+							else
+								return `${ANSI.fg.cyan}${text}${ANSI.reset}`;
+						}
+					}
 				}
 			}
 		};
@@ -663,4 +727,4 @@ export class Random {
 		}
 		return result;
 	}
-		}
+}
