@@ -131,6 +131,11 @@ const createColorFunctions = (type: 'fg' | 'bg', isBright = false) => {
 	}), {} as Record<ColorName, (text: string) => string>);
 };
 
+const E_SIGINT = () => {
+	process.stdout.write(ANSI.reset + "\n");
+	process.exit(0);
+};
+
 class ConsoleModule {
 	private activated = false;
 	private freezeInterval: NodeJS.Timeout | null = null;
@@ -263,10 +268,7 @@ class InputModule {
 		const cs = new ColorSide("en");
 		cs.use(cs.console);
 		cs.console.freeze();
-		process.on('SIGINT', () => {
-			process.stdout.write(ANSI.reset + "\n");
-			process.exit(0);
-		});
+		process.on('SIGINT', E_SIGINT);
 		const message: string = String(props.message);
 		const messageColor: string = props.messageColor ?? "";
 		const inputColor: string = props.inputColor ?? "";
@@ -292,6 +294,7 @@ class InputModule {
 		const result = await text(options);
 		process.stdout.write(ANSI.reset);
 		cs.console.unfreeze();
+		process.off('SIGINT', E_SIGINT);
 		return result;
 	}
 	async readnumber(props: CustomQuestion) {
@@ -299,10 +302,7 @@ class InputModule {
 		const cs = new ColorSide("en");
 		cs.use(cs.console);
 		cs.console.freeze();
-		process.on('SIGINT', () => {
-			process.stdout.write(ANSI.reset + "\n");
-			process.exit(0);
-		});
+		process.on('SIGINT', E_SIGINT);
 		const message: string = String(props.message);
 		const messageColor: string = props.messageColor ?? "";
 		const inputColor: string = props.inputColor ?? "";
@@ -340,6 +340,7 @@ class InputModule {
 		const result = await text(options);
 		process.stdout.write(ANSI.reset);
 		cs.console.unfreeze();
+		process.off('SIGINT', E_SIGINT);
 		return result;
 	}
 	async readconfirm(props: CustomQuestion) {
@@ -347,10 +348,7 @@ class InputModule {
 		const cs = new ColorSide("en");
 		cs.use(cs.console);
 		cs.console.freeze();
-		process.on('SIGINT', () => {
-			process.stdout.write(ANSI.reset + "\n");
-			process.exit(0);
-		});
+		process.on('SIGINT', E_SIGINT);
 		const message: string = String(props.message);
 		const messageColor: string = props.messageColor ?? "";
 		const inputColor: string = props.inputColor ?? "";
@@ -375,6 +373,7 @@ class InputModule {
 		const result = await confirm(options);
 		process.stdout.write(ANSI.reset);
 		cs.console.unfreeze();
+		process.on('SIGINT', E_SIGINT);
 		return result;
 	}
 	async readlist(props: CustomQuestion) {
@@ -382,10 +381,7 @@ class InputModule {
 		const cs = new ColorSide("en");
 		cs.use(cs.console);
 		cs.console.freeze();
-		process.on('SIGINT', () => {
-			process.stdout.write(ANSI.reset + "\n");
-			process.exit(0);
-		});
+		process.on('SIGINT', E_SIGINT);
 		const message: string = String(props.message);
 		const messageColor: string = props.messageColor ?? "";
 		const inputColor: string = props.inputColor ?? "";
@@ -450,6 +446,7 @@ class InputModule {
 		const result = await select(options);
 		process.stdout.write(ANSI.reset);
 		cs.console.unfreeze();
+		process.off('SIGINT', E_SIGINT);
 		return result;
 	}
 
@@ -471,11 +468,7 @@ class InputModule {
 		const cs = new ColorSide("en");
 		cs.use(cs.console);
 		cs.console.freeze();
-		process.on('SIGINT', () => {
-			process.stdout.write(ANSI.reset + "\n");
-			process.exit(0);
-		});
-
+		process.on('SIGINT', E_SIGINT);
 		const messageColor = props.messageColor ?? "";
 		const inputColor = props.inputColor ?? "";
 		const prefix = props.prefix === undefined ? undefined :
@@ -539,6 +532,7 @@ class InputModule {
 		const result = await checkbox<Value>(options);
 		process.stdout.write(ANSI.reset);
 		cs.console.unfreeze();
+		process.off('SIGINT', E_SIGINT);
 		return result;
 	}
 
@@ -547,10 +541,7 @@ class InputModule {
 		const cs = new ColorSide("en");
 		cs.use(cs.console);
 		cs.console.freeze();
-		process.on('SIGINT', () => {
-			process.stdout.write(ANSI.reset + "\n");
-			process.exit(0);
-		});
+		process.on('SIGINT', E_SIGINT);
 		const message: string = String(props.message);
 		const messageColor: string = props.messageColor ?? "";
 		const inputColor: string = props.inputColor ?? "";
@@ -576,6 +567,7 @@ class InputModule {
 		const result = await password(options);
 		process.stdout.write(ANSI.reset);
 		cs.console.unfreeze();
+		process.off('SIGINT', E_SIGINT);
 		return result;
 	}
 
@@ -584,10 +576,7 @@ class InputModule {
 		const cs = new ColorSide("en");
 		cs.use(cs.console);
 		cs.console.freeze();
-		process.on('SIGINT', () => {
-			process.stdout.write(ANSI.reset + "\n");
-			process.exit(0);
-		});
+		process.on('SIGINT', E_SIGINT);
 		const message: string = String(props.message);
 		const messageColor: string = props.messageColor ?? "";
 		const inputColor: string = props.inputColor ?? "";
@@ -645,6 +634,7 @@ class InputModule {
 		const result = await toggle(options);
 		process.stdout.write(ANSI.reset);
 		cs.console.unfreeze();
+		process.off('SIGINT', E_SIGINT);
 		return result;
 	}
 }
@@ -727,4 +717,4 @@ export class Random {
 		}
 		return result;
 	}
-}
+			}
