@@ -63,6 +63,18 @@ cs.use(cs.console);
 cs.console.log(cs.fg.bright.green(cs.format.bold("Green bright bold text")));
 // likewise cs.format.underlined
 ```
+## ANSI256 colors (xterm-256color)
+\- colorside@^1.2.3
+<br>
+```ts
+import { ANSI256 } from 'colorside/ansi256';
+
+ANSI256.get.fg("#hex"); // returns only ansi256-color code. need to ANSI.reset at the end
+ANSI256.get.bg("#hex"); // like get.fg, but background
+
+ANSI256.replace.fg("#hex", "Some Text"); // returns a fg color wrapper only for text from the 2nd argument
+ANSI256.replace.bg("#hex", "Some Text"); // like replace.fg, but background
+```
 
 Demo 2: <br> 
 <img src="https://cloud.fimastgd.tech/colorside/img2.jpg" width="200" alt="Demo 2">
