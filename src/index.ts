@@ -416,7 +416,7 @@ class InputModule {
 					help: (text: string) => instructions || "",
 					disabled: (text: string) => text,
 					highlight: (text: string) => {
-						const cleanText = text.replace("> ", "");
+						const cleanText = text.replace("> ", "").replace("❯ ", "");
 						for (const colorItem of selectColors) {
 							if (colorItem.keys.includes(cleanText)) {
 								return `${colorItem.color}${text}${ANSI.reset}`;
@@ -518,7 +518,7 @@ class InputModule {
 					error: (text: string) => `${ANSI.fg.bright.red}${ANSI.format.bold}✗${ANSI.reset} ${ANSI.fg.bright.red}${text}`,
 					disabledChoice: (text: string) => `${text}`,
 					highlight: (text: string) => {
-						const cleanText = text.replace(">( ) ", "");
+						const cleanText = text.replace(">( ) ", "").replace("❯◯ ", "");
 						for (const colorItem of selectColors) {
 							if (colorItem.keys.includes(cleanText)) {
 								return `${colorItem.color}${text}${ANSI.reset}`;
@@ -717,4 +717,4 @@ export class Random {
 		}
 		return result;
 	}
-			}
+	}
